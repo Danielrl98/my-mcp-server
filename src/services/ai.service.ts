@@ -5,6 +5,7 @@ import { readRecursive, applyChanges } from "./file.service";
 import { gitBackup } from "./git.service";
 import { getSession } from "./memory.service";
 import { isPathInside } from "../utils/path.util";
+import { readFileSync } from "fs";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -31,6 +32,13 @@ export async function processEdit(data: EditInstruction) {
 
   if (mode === "folder") {
     files = readRecursive(targetPath);
+  } else if (mode === "file") {
+    files.push({
+      path: targetPath,
+      content: readFileSync(targetPath, "utf-8"),
+    });
+  } else {
+    throw new Error("METHOD_NOT_EXISTS");
   }
 
   const content = `
