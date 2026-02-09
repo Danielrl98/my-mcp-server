@@ -45,10 +45,14 @@ export function applyChanges(actions: any[]) {
       return;
     }
 
-    fs.writeFileSync(
-      process.env.BASE_DIR + file.filePath,
-      file.content || "",
-      "utf-8",
-    );
+    try {
+      fs.writeFileSync(
+        process.env.BASE_DIR + file.filePath,
+        file.content || "",
+        "utf-8",
+      );
+    } catch (error) {
+      fs.writeFileSync(file.filePath, file.content || "", "utf-8");
+    }
   });
 }

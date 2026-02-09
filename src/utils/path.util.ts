@@ -8,9 +8,7 @@ export function resolveBaseDir(inputPath: string) {
     throw new Error("Path does not exist");
   }
 
-  return fs.statSync(absolute).isFile()
-    ? path.dirname(absolute)
-    : absolute;
+  return fs.statSync(absolute).isFile() ? path.dirname(absolute) : absolute;
 }
 
 export function isPathInside(baseDir: string, targetPath: string) {
@@ -19,9 +17,5 @@ export function isPathInside(baseDir: string, targetPath: string) {
 
   const relative = path.relative(absoluteBase, absoluteTarget);
 
-  return (
-    relative &&
-    !relative.startsWith("..") &&
-    !path.isAbsolute(relative)
-  );
+  return relative && !relative.startsWith("..") && !path.isAbsolute(relative);
 }

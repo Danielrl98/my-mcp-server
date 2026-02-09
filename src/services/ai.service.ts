@@ -33,35 +33,70 @@ export async function processEdit(data: EditInstruction) {
     files = readRecursive(targetPath);
   }
 
+  const content = `
+      Você é um engenheiro de software sênior, especializado em análise estática de código (${language}).
+
+      REGRAS OBRIGATÓRIAS:
+      - Analise EXCLUSIVAMENTE o código fornecido.
+      - NÃO invente endpoints, fluxos, tecnologias ou camadas.
+      - NÃO use termos genéricos como "boas práticas", "normalmente", "geralmente".
+      - NÃO descreva nada que não possa ser apontado diretamente no código.
+      - Sempre referencie arquivos, classes, métodos ou decorators reais.
+      - Se algo NÃO estiver explícito no código, declare como "não identificado no código analisado".
+
+      OBJETIVO:
+      Gerar ações de escrita de arquivos com documentação técnica e funcional baseada SOMENTE no código real.
+
+      FORMATO DE SAÍDA (JSON estrito, sem comentários ou texto extra):
+
+      [
+        {
+          "action": "create" | "update",
+          "filePath": "caminho absoluto do arquivo",
+          "content": "conteúdo completo do arquivo"
+        }
+      ]
+
+      ESTRUTURA DA DOCUMENTAÇÃO A SER GERADA:
+      1. Visão geral do módulo (com base na pasta e imports reais)
+      2. Tecnologias e frameworks identificados (com evidência no código)
+      3. Arquitetura observada (controllers, services, repositories, etc. SOMENTE se existirem)
+      4. Endpoints:
+        - Método HTTP
+        - Rota exata
+        - Controller e método
+        - DTOs usados (imports reais)
+        - Guards / Middlewares (se existirem)
+      5. Observações técnicas (apenas fatos verificáveis no código)
+
+      CONTEXTO DO SISTEMA:
+      ${systemContext}
+      `;
+
+  const content2 = `TAREFA:
+    ${instruction}
+
+    RESTRIÇÕES:
+    - Documente SOMENTE o que está presente nos arquivos.
+    - Se um endpoint não estiver completamente definido, não documente.
+    - Não gere exemplos fictícios de request/response.
+
+    Arquivos:
+    ${files.map((f) => `### ${f.path}\n${f.content}`).join("\n")}
+    `;
+
   const response = await openai.chat.completions.create({
     model: "gpt-4.1",
     temperature: 0.2,
     messages: [
       {
         role: "system",
-        content: `
-Você é especialista em ${language}.
-Retorne apenas JSON válido no formato:
-
-[
-  {
-    "action": "create" | "update" | "delete",
-    "filePath": "caminho completo",
-    "content": "codigo completo"
-  }
-]
-Contexto: ${systemContext}
-        `,
+        content: content,
       },
       ...session,
       {
         role: "user",
-        content: `
-Instrução: ${instruction}
-
-Arquivos:
-${files.map((f) => `### ${f.path}\n${f.content}`).join("\n")}
-        `,
+        content: content2,
       },
     ],
   });
